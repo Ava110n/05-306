@@ -11,6 +11,11 @@ class Screen {
         this.y = y
     }
 
+    constructor(offset: Offset) {
+        this.x = offset.x.toInt()
+        this.y = offset.y.toInt()
+    }
+
     constructor(cartesian: Cartesian, sizeInfo: SizeInfo) {
         this.x = (
                 (cartesian.x - sizeInfo.xMin)

@@ -20,21 +20,31 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 @Preview
 fun App() {
     var show by remember { mutableStateOf(false) }
     var isX by remember { mutableStateOf(true) }
     var info by remember { mutableStateOf(SizeInfo(0f, 0f, -5f, 5f, -5f, 5f)) }
+    var dots by remember { mutableStateOf(ArrayList<Cartesian>()) }
     Row {
         Column(modifier = Modifier.weight(3f)) {
-            Canvas(Modifier.fillMaxSize().background(Color.LightGray)) {
+            Canvas(Modifier.fillMaxSize().background(Color.LightGray).onPointerEvent(PointerEventType.Press) {
+                val cords = it.changes.first().position
+//                val b = it.button ?: return@onPointerEvent
+//                if (b.index != 0) return@onPointerEvent
+                dots.add(Cartesian(Screen(cords), info))
+            }) {
                 info.width = size.width
                 info.height = size.height
                 drawLine(
@@ -44,7 +54,9 @@ fun App() {
                 )
                 drawCircle(Color.Black, radius = 10f, Screen(Cartesian(1f, 0f), info).toOffset())
                 drawCircle(Color.Black, radius = 10f, Screen(Cartesian(0f, 1f), info).toOffset())
-
+                for (i in dots) {
+                    drawCircle(Color.Black, radius = 2f, Screen(i, info).toOffset())
+                }
                 drawLine(
                     Color.Black,
                     Screen(Cartesian(0f, info.yMin), info).toOffset(),
@@ -68,12 +80,21 @@ fun App() {
                     {
                         if (isX) {
                             info.xMin = it.toFloatOrNull() ?: info.xMin
-                        } else info.yMin = it.toFloatOrNull() ?: info.yMin
+                            info.ifChangedX()
+                        } else {
+                            info.yMin = it.toFloatOrNull() ?: info.yMin
+                            info.ifChangedY()
+                        }
                     },
                 )
                 TextField(if (isX) info.xMax.toString() else info.yMax.toString(), {
-                    if (isX) info.xMax = it.toFloatOrNull() ?: info.xMax
-                    else info.yMax = it.toFloatOrNull() ?: info.yMax
+                    if (isX) {
+                        info.xMax = it.toFloatOrNull() ?: info.xMax
+                        info.ifChangedX()
+                    } else {
+                        info.yMax = it.toFloatOrNull() ?: info.yMax
+                        info.ifChangedY()
+                    }
                 })
             }
         }
